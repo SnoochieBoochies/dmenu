@@ -322,13 +322,16 @@ kbdkey(void *data, struct wl_keyboard *kbd, uint32_t serial, uint32_t time,
 	char buf[32];
 	int len;
 	xkb_keysym_t ksym = XKB_KEY_NoSymbol;
+	bool ctrl = xkb_state_mod_index_is_active(xkb.state, xkb.ctrl, XKB_STATE_MODS_EFFECTIVE);
+	bool shift = xkb_state_mod_index_is_active(xkb.state, xkb.shift, XKB_STATE_MODS_EFFECTIVE);
+	bool alt = xkb_state_mod_index_is_active(xkb.state, xkb.alt, XKB_STATE_MODS_EFFECTIVE);
 
 	if (state == WL_KEYBOARD_KEY_STATE_RELEASED)
 		goto update_state;
 
 	ksym = xkb_state_key_get_one_sym(xkb.state, key + 8);
 	len = xkb_keysym_to_utf8(ksym, buf, sizeof buf) - 1;
-	if(xkb_state_mod_index_is_active(xkb.state, xkb.ctrl, XKB_STATE_MODS_EFFECTIVE))
+	if(ctrl)
 		switch(ksym) {
 		case XKB_KEY_a: ksym = XKB_KEY_Home;      break;
 		case XKB_KEY_b: ksym = XKB_KEY_Left;      break;
@@ -340,9 +343,9 @@ kbdkey(void *data, struct wl_keyboard *kbd, uint32_t serial, uint32_t time,
 		case XKB_KEY_h: ksym = XKB_KEY_BackSpace; break;
 		case XKB_KEY_i: ksym = XKB_KEY_Tab;       break;
 		case XKB_KEY_j: /* fallthrough */
-		case XKB_KEY_J: ksym = XKB_KEY_Return;    break;
+		case XKB_KEY_J: /* fallthrough */
 		case XKB_KEY_m: /* fallthrough */
-		case XKB_KEY_M: ksym = XKB_KEY_Return;    break;
+		case XKB_KEY_M: ksym = XKB_KEY_Return; ctrl = false; break;
 		case XKB_KEY_n: ksym = XKB_KEY_Down;      break;
 		case XKB_KEY_p: ksym = XKB_KEY_Up;        break;
 
@@ -370,7 +373,7 @@ kbdkey(void *data, struct wl_keyboard *kbd, uint32_t serial, uint32_t time,
 		default:
 			return;
 		}
-	else if(xkb_state_mod_index_is_active(xkb.state, xkb.alt, XKB_STATE_MODS_EFFECTIVE))
+	else if(alt)
 		switch(ksym) {
 		case XKB_KEY_g: ksym = XKB_KEY_Home;  break;
 		case XKB_KEY_G: ksym = XKB_KEY_End;   break;
@@ -450,13 +453,14 @@ kbdkey(void *data, struct wl_keyboard *kbd, uint32_t serial, uint32_t time,
 		break;
 	case XKB_KEY_Return:
 	case XKB_KEY_KP_Enter:
-		if(sel && !xkb_state_mod_index_is_active(xkb.state, xkb.shift, XKB_STATE_MODS_EFFECTIVE))
+		if(sel && !shift)
 		    puts(sel->text);
 		else
 		    puts(text);
-		if(!xkb_state_mod_index_is_active(xkb.state, xkb.ctrl, XKB_STATE_MODS_EFFECTIVE))
+		if(!ctrl)
 			exit(EXIT_SUCCESS);
-		sel->out = true;
+		if(sel)
+			sel->out = true;
 		break;
 	case XKB_KEY_Right:
 		if(text[cursor] != '\0') {
