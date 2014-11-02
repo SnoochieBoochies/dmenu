@@ -49,7 +49,7 @@ drawtextn(DC *dc, const char *text, size_t n, unsigned long col[ColLast]) {
 	int x = dc->x + dc->font->height/2;
 	int y = dc->y + dc->font->ascent+1;
 
-        wld_draw_text_n(dc->renderer, dc->font, FG(dc, col), x, y, text, n, NULL);
+	wld_draw_text(dc->renderer, dc->font, FG(dc, col), x, y, text, n, NULL);
 }
 
 void
